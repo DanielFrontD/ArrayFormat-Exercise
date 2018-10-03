@@ -1,0 +1,81 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	
+</body>
+<script src="trama-examen-fe-1.js"></script>
+<script>
+	const object = json.paths;
+
+	var setFormat = (path, name) => {
+		String.prototype.capitalize = function() {
+		    return this.replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+		};
+
+		this.compareAnyProperty = (elements) =>{
+			return elements.filter(element => element.in == 'query' || element.in == 'body').length > 0 ? true : false
+		}		
+		this.checkParameters = (elements) => {
+			let newArray = Object.values(elements)
+			let first = newArray.shift()
+			newArray = newArray.filter(element => element != first)
+			return newArray.filter(element => element.parameters != undefined) ? true : false;
+		}
+		this.compareProperty = (elements, property) =>{
+			return elements.filter(element => element.in == property).length > 0 ? true : false
+		}
+		this.getParametersObject = (parameters, property, operationId) => {
+			let newObject = parameters.filter(parameter => parameter.in == property)
+			if(newObject.length > 0){
+				let parameterObject = []
+				newObject.forEach((element, index)=>{
+					parameterObject.push({
+						modelName : `Req${element.schema ? element.schema.type : element.type}${operationId.capitalize()}`,
+						params: [{
+							name: element.name,
+							isRequired: element.required,
+							comma: (newObject.length - 1) == index ? true : false,
+							isBoolean: element.schema ? (element.schema.type != 'boolean' ? false : true) : (element.type != 'boolean' ? false : true),
+							isNumber: element.type != 'number' ? false : true,
+							isString: element.type != 'string' ? false : true
+						}]
+					})
+				}) 	
+				return parameterObject;
+			}
+			else if(property == 'body'){
+				return {isRequired: true}
+			}
+			else{
+				return {}
+			}
+		}
+
+		let newArray = [
+			{
+				consumes : path.get.consumes[0],
+				hasBodyOrQueryReq : path.put != undefined ? this.compareAnyProperty(path.put.parameters) : this.compareAnyProperty(path.get.parameters),
+				hasBodyReq : path.put != undefined ? this.compareProperty(path.put.parameters, 'body') : this.compareProperty(path.get.parameters, 'body'),
+				hasParameters : this.checkParameters(path),
+				hasPathReq : path.put != undefined ? this.compareProperty(path.put.parameters, 'path') : this.compareProperty(path.get.parameters, 'path'),
+				hasQueryRequest : path.put != undefined ? this.compareProperty(path.put.parameters, 'query') : this.compareProperty(path.get.parameters, 'query'),
+				httpMethod : 'get',
+				parameters : {
+					body : this.getParametersObject(path.put.parameters, 'body', path.put.operationId),
+					path : this.getParametersObject(path.put.parameters, 'path', path.put.operationId),
+					query : this.getParametersObject(path.put.parameters, 'query', path.put.operationId)
+				},
+				path : name
+			}
+		]
+
+		return newArray;
+
+	}
+
+	document.body.appendChild(document.createTextNode(JSON.stringify(setFormat(object["/areaPrivada/clientes/perfil/direccionCorrespondencia"], "/areaPrivada/clientes/perfil/direccionCorrespondencia"), null, 10)))
+</script>
+</html>
